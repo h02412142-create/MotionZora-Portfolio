@@ -16,13 +16,15 @@ const CATS = {
 };
 // Optional custom names, e.g. { "animation-08": "My name" }. Any video not listed is labelled with just its category.
 const NAMES = {};
+// clips shorter than ~20s (the B-roll 03 source is only 10.9s long): never start these part-way in
+const SHORT_CLIPS = new Set(["b-roll-03"]);
 const WIDE = new Set(["hooks-04", "hooks-05", "b-roll-05"]);
 const VIDEOS = [];
 for (const [key, c] of Object.entries(CATS)) {
   for (let i = 1; i <= c.n; i++) {
     const id = `${key}-${String(i).padStart(2, "0")}`;
     VIDEOS.push({ id, cat: key, num: String(i).padStart(2, "0"), wide: WIDE.has(id),
-      src: `media/${key}/${id}.mp4?v=3`, poster: `media/${key}/${id}.jpg?v=5` });
+      src: `media/${key}/${id}.mp4?v=4`, poster: `media/${key}/${id}.webp?v=6` });
   }
 }
 
@@ -50,9 +52,11 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   });
   let lastY = scrollY, boost = 0;
   addEventListener("scroll", () => { boost = Math.min(Math.abs(scrollY - lastY), 60); lastY = scrollY; }, { passive: true });
+  let rate = 1;
   (function tick() {
     boost *= .92;
-    anims.forEach(a => a.playbackRate = 1 + boost / 6);
+    const want = boost < .05 ? 1 : 1 + boost / 6;
+    if (want !== rate) { rate = want; anims.forEach(a => a.playbackRate = rate); }
     requestAnimationFrame(tick);
   })();
 })();
@@ -173,9 +177,9 @@ function pickAd(slot, shown, dom) {
   function setPhone(i, id, animate, stagger) {
     const p = phones[i], vid = $("video", p), v = VIDEOS.find(x => x.id === id);
     const apply = () => {
-      vid.poster = v.poster; vid.src = v.src; p.dataset.id = id;
+      vid.poster = v.poster; p.dataset.id = id;
+      vid.src = (stagger && !SHORT_CLIPS.has(id)) ? `${v.src}#t=${stagger}` : v.src;   // "#t=9" makes the video start 9 seconds in, so the three don't all end together
       const tag = $(".tag", p); if (tag) tag.textContent = label(id);
-      if (stagger) vid.addEventListener("loadedmetadata", () => { try { vid.currentTime = stagger; } catch (e) {} }, { once: true });
       vid.play().catch(() => {});
     };
     shown[i] = id;
@@ -257,8 +261,6 @@ addEventListener("scroll", () => {
 $("#burger").onclick = () => $("#nav").classList.toggle("open");
 $$(".nav a").forEach(a => a.addEventListener("click", () => $("#nav").classList.remove("open")));
 
-const glow = $("#glow");
-addEventListener("pointermove", e => { glow.style.left = e.clientX + "px"; glow.style.top = e.clientY + "px"; });
 
 /* card spotlight + tilt on services */
 document.addEventListener("pointermove", e => {
@@ -268,13 +270,6 @@ document.addEventListener("pointermove", e => {
   c.style.transform = `perspective(700px) translateY(-12px) scale(1.04) rotateY(${(x / r.width - .5) * 8}deg) rotateX(${(.5 - y / r.height) * 8}deg)`;
 });
 document.addEventListener("pointerout", e => { const c = e.target.closest && e.target.closest(".svc"); if (c) c.style.transform = ""; });
-
-/* hero parallax */
-const hv = $("#heroVisual");
-addEventListener("pointermove", e => {
-  const x = (e.clientX / innerWidth - .5), y = (e.clientY / innerHeight - .5);
-  hv.style.transform = `rotateY(${x * 8}deg) rotateX(${-y * 6}deg)`;
-});
 
 /* hero 3D carousel: hover a back phone and it rotates to the front */
 (function () {
@@ -293,9 +288,13 @@ addEventListener("pointermove", e => {
     p.addEventListener("pointermove", go);   // also fires if the cursor is already resting on a back phone
     p.addEventListener("click", () => bringToFront(i));
   });
+  let dirty = true; addEventListener("resize", () => { dirty = true; });
   (function loop(t) {
     const dt = Math.min((t - last) / 16.7, 3); last = t;
+    if (Math.abs(target - rot) < .02 && !dirty) { requestAnimationFrame(loop); return; }   // settled: nothing to redraw
     rot += (target - rot) * (1 - Math.pow(.9, dt));                      // smooth easing
+    if (Math.abs(target - rot) < .02) rot = target;
+    dirty = false;
     phones.forEach((p, i) => {
       const th = (i * STEP + rot) * Math.PI / 180, s = Math.sin(th), c = Math.cos(th);
       const front = c > .85;
@@ -321,46 +320,6 @@ $("#form").addEventListener("submit", e => {
   location.href = `mailto:${CONTACT.email}?subject=${encodeURIComponent(t("mail.quote") + ": " + f.get("service"))}&body=${encodeURIComponent(body)}`;
 });
 $("#yr").textContent = new Date().getFullYear();
-
-/* ============ FUTURISTIC BACKGROUND: particle wave mesh ============ */
-(function () {
-  const cv = $("#bg"), ctx = cv.getContext("2d");
-  let W, H, pts = [], mouse = { x: -999, y: -999 };
-  const DPR = Math.min(devicePixelRatio || 1, 2);
-  function resize() {
-    W = cv.width = innerWidth * DPR; H = cv.height = innerHeight * DPR;
-    const n = Math.round(innerWidth * innerHeight / 14000);
-    pts = Array.from({ length: Math.min(n, 110) }, () => ({
-      x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - .5) * .35 * DPR, vy: (Math.random() - .5) * .35 * DPR,
-      c: Math.random() < .3 ? "0,217,255" : "139,92,246"
-    }));
-  }
-  resize(); addEventListener("resize", resize);
-  addEventListener("pointermove", e => { mouse.x = e.clientX * DPR; mouse.y = e.clientY * DPR; });
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function frame() {
-    ctx.clearRect(0, 0, W, H);
-    const D = 150 * DPR;
-    for (const p of pts) {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0 || p.x > W) p.vx *= -1;
-      if (p.y < 0 || p.y > H) p.vy *= -1;
-      const dx = p.x - mouse.x, dy = p.y - mouse.y, d = Math.hypot(dx, dy);
-      if (d < 140 * DPR) { p.x += dx / d * 1.2; p.y += dy / d * 1.2; }
-      ctx.fillStyle = `rgba(${p.c},.8)`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 1.6 * DPR, 0, 6.283); ctx.fill();
-    }
-    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
-      const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (d < D) { ctx.strokeStyle = `rgba(${a.c},${(1 - d / D) * .28})`; ctx.lineWidth = DPR * .8;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
-    }
-    if (!reduce) requestAnimationFrame(frame);
-  }
-  frame();
-})();
-
 
 /* ============ TESTIMONIALS (replace the placeholders with real client quotes) ============ */
 // Each entry: { name, stars, text: { en, de, fr, el, pl, es } }. If a language is missing, English is shown.

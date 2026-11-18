@@ -217,7 +217,7 @@ h2{font-size:clamp(2rem,4.2vw,3.2rem);letter-spacing:-.03em;line-height:1.1;marg
 :root[data-theme="light"] .svc .count{color:#0a8fb0}
 
 /* ---------- colourful light mode ---------- */
-:root[data-theme="light"] body{
+:root[data-theme="light"] body::before{content:"";position:fixed;inset:0;z-index:-3;pointer-events:none;
   background:
     radial-gradient(900px circle at 8% 4%, rgba(139,92,246,.34), transparent 60%),
     radial-gradient(800px circle at 96% 12%, rgba(0,217,255,.30), transparent 60%),
@@ -225,7 +225,7 @@ h2{font-size:clamp(2rem,4.2vw,3.2rem);letter-spacing:-.03em;line-height:1.1;marg
     radial-gradient(900px circle at 6% 80%, rgba(0,217,255,.22), transparent 60%),
     radial-gradient(800px circle at 60% 100%, rgba(139,92,246,.28), transparent 60%),
     #E9E7FF;
-  background-attachment:fixed}
+}
 :root[data-theme="light"] .svc{background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(226,218,255,.75));border-color:rgba(139,92,246,.35)}
 :root[data-theme="light"] .svc:nth-child(3n+2){background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(205,244,255,.8))}
 :root[data-theme="light"] .svc:nth-child(3n){background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(255,222,240,.75))}
@@ -252,7 +252,7 @@ h2{font-size:clamp(2rem,4.2vw,3.2rem);letter-spacing:-.03em;line-height:1.1;marg
 :root[data-theme="light"] .footer{border-color:rgba(139,92,246,.3)}
 
 /* ---------- colourful dark mode ---------- */
-:root:not([data-theme="light"]) body{
+:root:not([data-theme="light"]) body::before{content:"";position:fixed;inset:0;z-index:-3;pointer-events:none;
   background:
     radial-gradient(900px circle at 6% 6%, rgba(139,92,246,.28), transparent 60%),
     radial-gradient(800px circle at 96% 14%, rgba(0,217,255,.16), transparent 60%),
@@ -260,7 +260,7 @@ h2{font-size:clamp(2rem,4.2vw,3.2rem);letter-spacing:-.03em;line-height:1.1;marg
     radial-gradient(900px circle at 4% 78%, rgba(0,217,255,.13), transparent 60%),
     radial-gradient(900px circle at 62% 100%, rgba(109,61,240,.3), transparent 60%),
     #090B14;
-  background-attachment:fixed}
+}
 :root:not([data-theme="light"]) .svc{background:linear-gradient(155deg,rgba(139,92,246,.22),rgba(23,26,43,.75) 60%)}
 :root:not([data-theme="light"]) .svc:nth-child(3n+2){background:linear-gradient(155deg,rgba(0,217,255,.16),rgba(23,26,43,.75) 60%)}
 :root:not([data-theme="light"]) .svc:nth-child(3n){background:linear-gradient(155deg,rgba(236,72,153,.18),rgba(23,26,43,.75) 60%)}
@@ -525,3 +525,45 @@ h2{font-size:clamp(2rem,4.2vw,3.2rem);letter-spacing:-.03em;line-height:1.1;marg
 .grid-break{flex:0 0 100%;height:0}
 @media(max-width:980px){.grid{--cols:3}}
 @media(max-width:640px){.grid{--cols:2;--gap:12px}}
+
+/* ---------- performance pass ---------- */
+.card{will-change:auto;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -3px 10px rgba(0,0,0,.45),2px 2px 0 #6b4cd4,4px 4px 0 #5b40b7,6px 6px 0 #4b359b,8px 8px 0 #3b2a7f,10px 10px 0 #2b1e62,12px 12px 0 #1b1346,16px 22px 30px rgba(0,0,0,.5)}
+.card:hover{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -3px 10px rgba(0,0,0,.45),2px 2px 0 #7e5dea,4px 4px 0 #7154d6,6px 6px 0 #654ac1,8px 8px 0 #5941ad,10px 10px 0 #4c3898,12px 12px 0 #402f84,14px 14px 0 #34256f,16px 16px 0 #271c5b,18px 18px 0 #1b1346,22px 32px 40px rgba(0,0,0,.55),0 0 30px rgba(139,92,246,.3)}
+:root[data-theme="light"] .card{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -3px 10px rgba(0,0,0,.25),2px 2px 0 #b8a6f8,4px 4px 0 #ac99f2,6px 6px 0 #a18dec,8px 8px 0 #9681e5,10px 10px 0 #8a74de,12px 12px 0 #7f68d8,16px 22px 30px rgba(80,60,160,.3)}
+:root[data-theme="light"] .card:hover{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),inset 0 -3px 10px rgba(0,0,0,.25),2px 2px 0 #c7b7fb,4px 4px 0 #beadf6,6px 6px 0 #b5a3f2,8px 8px 0 #ac99ee,10px 10px 0 #a390e9,12px 12px 0 #9a86e5,14px 14px 0 #917ce1,16px 16px 0 #8872dc,18px 18px 0 #7f68d8,22px 32px 40px rgba(80,60,160,.35)}
+/* backdrop blur is expensive to repaint while scrolling: keep it only on the main menu and the language menu */
+.chip,.float-card,.lang-btn,.theme-btn,.tlabel,.tag,.card .play,.r2,.contact-form input{backdrop-filter:none;-webkit-backdrop-filter:none}
+.card .play,.tlabel,.tag{background:rgba(9,11,20,.82)}
+.lang-btn,.theme-btn,.chip{background:rgba(var(--card-rgb),.9)}
+.float-card{background:rgba(var(--card-rgb),.94)}
+.r2{background:rgba(var(--card-rgb),.88)}
+.nav-wrap::before{backdrop-filter:none;-webkit-backdrop-filter:none;-webkit-mask-image:none;mask-image:none;background:linear-gradient(rgba(var(--bg-rgb),.9),rgba(var(--bg-rgb),0))}
+/* gradient-position animations repaint big areas every frame: use the static gradient */
+.r1{animation:none;background-size:100% 100%}
+.r2 .w{animation:none;background-size:100% 100%}
+.ribbons .rtrack{will-change:transform}
+
+/* ---------- lighter motion: no particle canvas, no cursor glow, fewer endless animations ---------- */
+#bg,.glow{display:none}
+.btn-primary::after{display:none}
+.dot,.scroll-down,.fc1,.fc2,.o1,.o2,.rtrack .s{animation:none}
+.svc.in .ico{animation:icoIn .8s cubic-bezier(.2,1.6,.4,1) backwards}
+
+/* ---------- colour gradient fill for the page background (static, so it costs nothing while scrolling) ---------- */
+:root:not([data-theme="light"]) body::before{
+  background:
+    radial-gradient(1100px circle at 8% 6%, rgba(139,92,246,.45), transparent 62%),
+    radial-gradient(900px circle at 94% 12%, rgba(0,217,255,.28), transparent 60%),
+    radial-gradient(1000px circle at 84% 52%, rgba(236,72,153,.22), transparent 62%),
+    radial-gradient(1000px circle at 6% 66%, rgba(0,217,255,.22), transparent 62%),
+    radial-gradient(1200px circle at 52% 100%, rgba(109,61,240,.45), transparent 62%),
+    linear-gradient(180deg,#0b0d1c 0%,#0a0c18 45%,#0c0a1e 100%)}
+:root[data-theme="light"] body::before{
+  background:
+    radial-gradient(1100px circle at 8% 6%, rgba(139,92,246,.42), transparent 62%),
+    radial-gradient(900px circle at 94% 12%, rgba(0,217,255,.36), transparent 60%),
+    radial-gradient(1000px circle at 84% 52%, rgba(244,114,182,.3), transparent 62%),
+    radial-gradient(1000px circle at 6% 66%, rgba(0,217,255,.3), transparent 62%),
+    radial-gradient(1200px circle at 52% 100%, rgba(139,92,246,.4), transparent 62%),
+    linear-gradient(180deg,#ece9ff 0%,#e6ebff 50%,#efe6ff 100%)}
